@@ -7,7 +7,7 @@ export WINEARCH="${WINEARCH:-win64}"
 export GAME_ROOT="${GAME_ROOT:-/opt/game}"
 
 DESKTOP_NAME="${DESKTOP_NAME:-DSR}"
-DESKTOP_RES="${DESKTOP_RES:-1920x1080}"
+DESKTOP_RES="${DESKTOP_RES:-800x600}"
 
 # Avoid Wine first-run prompts
 export WINEDLLOVERRIDES="winemenubuilder.exe=d;mscoree,mshtml="
