@@ -2,10 +2,10 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# --- Enable 32-bit packages ---
+# Enable the 32-bit packages
 RUN dpkg --add-architecture i386
 
-# --- Base deps (X11 tools, Vulkan tools, PulseAudio, Xvfb for headless prefix prep) ---
+# Installing the base dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl gnupg2 wget \
       unzip cabextract xz-utils p7zip-full file \
@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       xvfb \
       winbind \
       fonts-wine \
-      \
       libvulkan1 libvulkan1:i386 \
       libgl1 libgl1:i386 \
       libx11-6 libx11-6:i386 \
@@ -33,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libpulse0 libpulse0:i386 \
     && rm -rf /var/lib/apt/lists/*
 
-# --- WineHQ repo (Jammy) + Wine stable ---
+# Installing WineHQ repo (Jammy) and Wine stable
 RUN mkdir -p /etc/apt/keyrings && \
     curl -fsSL https://dl.winehq.org/wine-builds/winehq.key | \
       gpg --dearmor -o /etc/apt/keyrings/winehq-archive.key && \
@@ -44,41 +43,41 @@ RUN mkdir -p /etc/apt/keyrings && \
     apt-get install -y --install-recommends winehq-stable && \
     rm -rf /var/lib/apt/lists/*
 
-# --- Winetricks (latest upstream script) ---
+# Installing Winetricks (latest upstream script)
 RUN wget -qO /usr/local/bin/winetricks \
       https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks && \
     chmod +x /usr/local/bin/winetricks
 
-# --- Defaults (overridable at runtime) ---
+# Setting the default values
 ENV WINEPREFIX=/opt/prefix \
     WINEARCH=win64 \
     WINEDEBUG=-all \
+    GAME_ROOT=/root/Dark.Souls.Remastered.v1.04 \
     WINEESYNC=0 \
     WINEFSYNC=0 \
     WINEDLLOVERRIDES="mscoree,mshtml=;winemenubuilder.exe=d" \
     WINETRICKS_OPT_UNATTENDED=1
 
-# --- Game ---
-RUN mkdir -p /opt/game
-COPY Dark.Souls.Remastered.v1.04.zip /opt/game/game.zip
-RUN 7z x -y -o/opt/game /opt/game/game.zip && rm -f /opt/game/game.zip
-
-# --- Prepare persistent Wine prefix at build time (headless) ---
-# Note: This runs without your GPU/display; DXVK is installed into the prefix, but shaders/caches are created at runtime.
+# Preparing the persistent Wine prefix in headless mode
 RUN mkdir -p "$WINEPREFIX" && \
     xvfb-run -a wineboot --init && \
     xvfb-run -a env WINETRICKS_SUPER_QUIET=1 WINETRICKS_VERBOSE=0 \
       winetricks -q --unattended win10 vcrun2022 d3dcompiler_47 dxvk && \
-    # clean winetricks caches to keep image smaller (optional)
     rm -rf /root/.cache/winetricks
 
-# --- Scripts (in /root/scripts) ---
-RUN mkdir -p /root/scripts
-COPY run_gui.sh /root/scripts/run_gui.sh
-COPY entrypoint.sh /root/scripts/entrypoint.sh
+WORKDIR /root
+
+# Copy the entire current project directory into /root
+COPY scripts /root/scripts
+COPY Dark.Souls.Remastered.v1.04.zip /root/Dark.Souls.Remastered.v1.04.zip
+
+# Unzip the game files into the root directory
+RUN 7z x -y -o/root /root/Dark.Souls.Remastered.v1.04.zip && rm -f /root/Dark.Souls.Remastered.v1.04.zip
+
 RUN chmod +x /root/scripts/entrypoint.sh
+RUN chmod +x /root/scripts/run_headless.sh
 RUN chmod +x /root/scripts/run_gui.sh
 
-WORKDIR /root
+# When the container is started, the entrypoint script will be executed
 ENTRYPOINT ["/root/scripts/entrypoint.sh"]
 CMD ["/bin/bash"]
