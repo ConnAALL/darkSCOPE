@@ -4,7 +4,7 @@ set -euo pipefail
 # --- Config (override via env) ---
 export WINEPREFIX="${WINEPREFIX:-/opt/prefix}"
 export WINEARCH="${WINEARCH:-win64}"
-export GAME_ROOT="${GAME_ROOT:-/opt/game}"
+export GAME_ROOT="${GAME_ROOT:-/root/Dark.Souls.Remastered.v1.04}"
 
 DESKTOP_NAME="${DESKTOP_NAME:-DSR}"
 DESKTOP_RES="${DESKTOP_RES:-800x600}"

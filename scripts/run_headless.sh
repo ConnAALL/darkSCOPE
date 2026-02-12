@@ -4,7 +4,7 @@ set -euo pipefail
 export WINEPREFIX="${WINEPREFIX:-/opt/prefix}"
 export WINEARCH="${WINEARCH:-win64}"
 export WINEDEBUG="${WINEDEBUG:--all}"
-export GAME_ROOT="${GAME_ROOT:-/opt/game}"
+export GAME_ROOT="${GAME_ROOT:-/root/Dark.Souls.Remastered.v1.04}"
 export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-mscoree,mshtml=;winemenubuilder.exe=d}"
 
 log="${WINEPREFIX}/darkscope_init.log"
@@ -38,12 +38,18 @@ init_prefix() {
 
 init_prefix
 
-if [[ -f "${GAME_ROOT}/GAMEDIR" ]]; then
-  GAME_DIR="$(cat "${GAME_ROOT}/GAMEDIR")"
-else
-  GAME_DIR="${GAME_ROOT}"
-fi
+# --- Locate game exe (allow override via $GAME_EXE) ---
+GAME_EXE="${GAME_EXE:-}"
+if [[ -z "$GAME_EXE" ]]; then
+  # Optional indirection for unusual layouts
+  if [[ -f "${GAME_ROOT}/GAMEDIR" ]]; then
+    GAME_ROOT="$(cat "${GAME_ROOT}/GAMEDIR")"
+  fi
 
-cd "${GAME_DIR}"
-echo "Launching headless from: ${GAME_DIR}"
-exec xvfb-run -a -s "-screen 0 1280x720x24" wine DarkSoulsRemastered.exe
+  GAME_EXE="$(find "$GAME_ROOT" -type f -iname 'DarkSoulsRemastered.exe' -print -quit)"
+fi
+[[ -n "$GAME_EXE" ]] || die "DarkSoulsRemastered.exe not found under ${GAME_ROOT} (set GAME_ROOT or GAME_EXE)"
+
+cd "$(dirname "$GAME_EXE")"
+echo "Launching headless: ${GAME_EXE}"
+exec xvfb-run -a -s "-screen 0 1280x720x24" wine "$(basename "$GAME_EXE")"
