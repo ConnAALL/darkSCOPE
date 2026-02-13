@@ -9,7 +9,7 @@ RUN dpkg --add-architecture i386
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl gnupg2 wget \
       unzip cabextract xz-utils p7zip-full file \
-      bash git vim htop procps psmisc \
+      bash git vim htop tmux procps psmisc \
       x11-utils x11-xserver-utils xauth \
       vulkan-tools \
       pulseaudio pulseaudio-utils \
