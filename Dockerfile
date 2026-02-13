@@ -69,6 +69,7 @@ WORKDIR /root
 
 # Copy the entire current project directory into /root
 COPY scripts /root/scripts
+COPY darkAgent /root/darkAgent
 COPY Dark.Souls.Remastered.v1.04.zip /root/Dark.Souls.Remastered.v1.04.zip
 
 # Unzip the game files into the root directory
