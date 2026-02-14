@@ -2,6 +2,10 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Enable NVIDIA container runtime to mount graphics bits by default.
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=all
+
 # Enable the 32-bit packages
 RUN dpkg --add-architecture i386
 
@@ -11,6 +15,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       unzip cabextract xz-utils p7zip-full file \
       bash git vim htop tmux procps psmisc \
       x11-utils x11-xserver-utils xauth \
+      xserver-xorg-core \
+      xserver-xorg-legacy \
+      xserver-xorg-video-dummy \
+      xserver-xorg-input-libinput \
+      mesa-utils \
+      x11vnc \
       vulkan-tools \
       pulseaudio pulseaudio-utils \
       xvfb \
@@ -68,13 +78,17 @@ RUN mkdir -p "$WINEPREFIX" && \
 
 WORKDIR /root
 
-# Copy the entire current project directory into /root
+# Copy the relevant folders into the container
 COPY Dark.Souls.Remastered.v1.04.zip /root/Dark.Souls.Remastered.v1.04.zip
 RUN 7z x -y -o/root /root/Dark.Souls.Remastered.v1.04.zip && rm -f /root/Dark.Souls.Remastered.v1.04.zip
 COPY scripts /root/scripts
 COPY darkAgent /root/darkAgent
 
+# Make the scripts executable
 RUN chmod +x /root/scripts/*.sh
+
+# Install the Python dependencies for darkAgent
+RUN python3 -m pip install --no-cache-dir -r /root/darkAgent/requirements.txt
 
 # When the container is started, the entrypoint script will be executed
 ENTRYPOINT ["/root/scripts/entrypoint.sh"]
