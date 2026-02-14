@@ -68,16 +68,12 @@ RUN mkdir -p "$WINEPREFIX" && \
 WORKDIR /root
 
 # Copy the entire current project directory into /root
+COPY Dark.Souls.Remastered.v1.04.zip /root/Dark.Souls.Remastered.v1.04.zip
+RUN 7z x -y -o/root /root/Dark.Souls.Remastered.v1.04.zip && rm -f /root/Dark.Souls.Remastered.v1.04.zip
 COPY scripts /root/scripts
 COPY darkAgent /root/darkAgent
-COPY Dark.Souls.Remastered.v1.04.zip /root/Dark.Souls.Remastered.v1.04.zip
 
-# Unzip the game files into the root directory
-RUN 7z x -y -o/root /root/Dark.Souls.Remastered.v1.04.zip && rm -f /root/Dark.Souls.Remastered.v1.04.zip
-
-RUN chmod +x /root/scripts/entrypoint.sh
-RUN chmod +x /root/scripts/run_headless.sh
-RUN chmod +x /root/scripts/run_gui.sh
+RUN chmod +x /root/scripts/*.sh
 
 # When the container is started, the entrypoint script will be executed
 ENTRYPOINT ["/root/scripts/entrypoint.sh"]
