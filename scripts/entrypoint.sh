@@ -10,7 +10,7 @@ export PULSE_SERVER="unix:$PULSE_SOCKET"
 mkdir -p "$PULSE_DIR"
 chmod 700 "$PULSE_DIR"
 
-pulseaudio -n --daemonize=yes --exit-idle-time=-1 --log-target=stderr \
+pulseaudio --system -n --daemonize=yes --exit-idle-time=-1 --log-target=stderr \
   -L "module-native-protocol-unix socket=$PULSE_SOCKET auth-anonymous=1" \
   -L "module-null-sink sink_name=nullsink sink_properties=device.description=NullSink" \
   -L "module-always-sink" || true
@@ -72,6 +72,6 @@ fi
 ID="$(ls -1 "$SAVE_ROOT" | grep -E '^[0-9]+$' | head -n 1)"
 echo "[entrypoint] Using DSR user ID: $ID"
 echo "[entrypoint] Initialization complete."
-echo "\n"
+echo
 echo "Welcome to the Dark Souls Remastered Docker container!"
 exec "$@"
