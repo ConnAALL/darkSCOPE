@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libdbus-1-3 libdbus-1-3:i386 \
       libasound2 libasound2:i386 \
       libpulse0 libpulse0:i386 \
+      python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Installing WineHQ repo (Jammy) and Wine stable
