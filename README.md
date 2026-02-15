@@ -17,31 +17,32 @@ xhost +si:localuser:root
 ./get_game.sh "drive-link"
 ```
 
+### Running the container in an Nvidia GPU machine
 Run the container using the docker-compose file
 ```bash
-docker compose run --rm dsr  # Start the container
+docker compose run --rm dsr-nvidia
 ```
 
 If you want to connect a frame into the headless mode, expose a specific port to the container
 ```bash
-docker compose run --rm -p 127.0.0.1:5900:5900 dsr
+docker compose run --rm -p 127.0.0.1:5900:5900 dsr-nvidia
 ```
 
 ## Running the Game
 
-> Directly running inside a GUI
+### Directly running inside a GUI
 ```bash
-./scripts/run_game.sh gui  # To run with a graphical user interface
+./scripts/run_game.sh gui
 ```
 
-> Running completely headless
+### Running completely headless
 ```bash
-./scripts/run_game.sh headless  # To run completely headless
+./scripts/run_game.sh headless
 ```
 
-> Running headless with an attached virtual display
+### Running headless with an attached virtual display
 ```bash
-./scripts/run_game.sh headless-vnc  # To run in the headless mode with a virtual display that can be accessed to
+./scripts/run_game.sh headless-vnc
 ```
 ```bash
 vncviewer 127.0.0.1:5900  # Run this in your host machine to connect to the display
