@@ -11,13 +11,30 @@ The container for running the game can be built using the docker-compose file
 docker compose build  # Build the container
 ```
 
-Before running the container, allow the root user to access your X server
+Before running the container, allow the root user to access your X server and get the game source from your Drive folder
 ```bash
 xhost +si:localuser:root
+./get_game.sh "drive-link"
+```
+
+Run the container using the docker-compose file
+```bash
 docker compose run --rm dsr  # Start the container
 ```
 
 If you want to connect a frame into the headless mode, expose a specific port to the container
 ```bash
-docker compose run --rm -p 127.0.0.1:5900:5900 dsr bash -lc '/root/scripts/run_game.sh headless-vnc'
+docker compose run --rm -p 127.0.0.1:5900:5900 dsr
 ```
+
+## Running the Game
+
+```bash
+./scripts/run_game.sh gui  # To run with a graphical user interface
+
+./scripts/run_game.sh headless  # To run completely headless
+
+./scripts/run_game.sh headless-vnc  # To run in the headless mode with a virtual display that can be accessed to
+```
+
+## Running the Training
