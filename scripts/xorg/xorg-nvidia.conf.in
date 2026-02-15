@@ -1,0 +1,34 @@
+Section "ServerLayout"
+  Identifier "Layout0"
+  Screen 0 "Screen0"
+EndSection
+
+Section "Module"
+  Load "glx"
+EndSection
+
+Section "Device"
+  Identifier "Device0"
+  Driver "nvidia"
+  VendorName "NVIDIA Corporation"
+  Option "AllowEmptyInitialConfiguration" "true"
+  Option "UseDisplayDevice" "none"
+  Option "NoLogo" "true"
+EndSection
+
+Section "Monitor"
+  Identifier "Monitor0"
+  HorizSync 28.0-80.0
+  VertRefresh 48.0-75.0
+EndSection
+
+Section "Screen"
+  Identifier "Screen0"
+  Device "Device0"
+  Monitor "Monitor0"
+  DefaultDepth {{XORG_DEPTH}}
+  SubSection "Display"
+    Depth {{XORG_DEPTH}}
+    Virtual {{VIRTUAL_W}} {{VIRTUAL_H}}
+  EndSubSection
+EndSection
