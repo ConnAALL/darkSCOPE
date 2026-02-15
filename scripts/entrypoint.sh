@@ -14,7 +14,7 @@ pkill -9 pulseaudio >/dev/null 2>&1 || true
 rm -f "$PULSE_SOCKET"
 rm -rf /run/pulse /var/run/pulse 2>/dev/null || true
 
-pulseaudio --system -n --daemonize=yes --exit-idle-time=-1 --log-target=stderr \
+pulseaudio -n --daemonize=yes --exit-idle-time=-1 --log-target=stderr \
   -L "module-native-protocol-unix socket=$PULSE_SOCKET auth-anonymous=1" \
   -L "module-null-sink sink_name=nullsink sink_properties=device.description=NullSink" \
   -L "module-always-sink" || true
