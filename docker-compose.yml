@@ -4,7 +4,6 @@ services:
     image: dsr:latest
     stdin_open: true
     tty: true
-    gpus: all
     cap_add:
       - SYS_PTRACE
     security_opt:
@@ -17,3 +16,12 @@ services:
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     command: /bin/bash
+
+  dsr-nvidia:
+    extends:
+      service: dsr
+    runtime: nvidia
+    gpus: all
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
