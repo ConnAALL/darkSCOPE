@@ -28,6 +28,11 @@ export GAME_ROOT="${GAME_ROOT:-/root/Dark.Souls.Remastered.v1.04}"
 export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-winemenubuilder.exe=d;mscoree,mshtml=}"
 export WINEDEBUG="${WINEDEBUG:--all}"
 
+# Ensure DXVK is used (force native D3D11/DXGI)
+wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d11     /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+wine reg add "HKCU\Software\Wine\DllOverrides" /v dxgi      /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d10core /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+
 # Set the desktop name and resolution
 DESKTOP_NAME="${DESKTOP_NAME:-DSR}"
 DESKTOP_RES="${DESKTOP_RES:-800x600}"
