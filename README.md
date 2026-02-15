@@ -29,12 +29,22 @@ docker compose run --rm -p 127.0.0.1:5900:5900 dsr
 
 ## Running the Game
 
+> Directly running inside a GUI
 ```bash
 ./scripts/run_game.sh gui  # To run with a graphical user interface
+```
 
+> Running completely headless
+```bash
 ./scripts/run_game.sh headless  # To run completely headless
+```
 
+> Running with an attached virtual display
+```bash
 ./scripts/run_game.sh headless-vnc  # To run in the headless mode with a virtual display that can be accessed to
+```
+```bash
+vncviewer 127.0.0.1:5900  # Run this in your host machine to connect to the display
 ```
 
 ## Running the Training
