@@ -39,7 +39,7 @@ docker compose run --rm -p 127.0.0.1:5900:5900 dsr
 ./scripts/run_game.sh headless  # To run completely headless
 ```
 
-> Running with an attached virtual display
+> Running headless with an attached virtual display
 ```bash
 ./scripts/run_game.sh headless-vnc  # To run in the headless mode with a virtual display that can be accessed to
 ```
