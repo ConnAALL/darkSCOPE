@@ -1,0 +1,19 @@
+services:
+  dsr:
+    build: .
+    image: dsr:latest
+    stdin_open: true
+    tty: true
+    gpus: all
+    cap_add:
+      - SYS_PTRACE
+    security_opt:
+      - seccomp=unconfined
+      - apparmor=unconfined
+    environment:
+      DSR_MODE: ${DSR_MODE:-gui}
+      DISPLAY: ${DISPLAY:-}
+      DESKTOP_RES: ${DESKTOP_RES:-800x600}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    command: /bin/bash
