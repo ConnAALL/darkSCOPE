@@ -28,10 +28,31 @@ export GAME_ROOT="${GAME_ROOT:-/root/Dark.Souls.Remastered.v1.04}"
 export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-winemenubuilder.exe=d;mscoree,mshtml=}"
 export WINEDEBUG="${WINEDEBUG:--all}"
 
-# Ensure DXVK is used (force native D3D11/DXGI)
-wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d11     /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
-wine reg add "HKCU\Software\Wine\DllOverrides" /v dxgi      /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
-wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d10core /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+supports_vk_maintenance5() {
+  # Fast check: does the loader expose the extension anywhere?
+  vulkaninfo 2>/dev/null | grep -q "VK_KHR_maintenance5"
+}
+
+enable_dxvk_overrides() {
+  wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d11     /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+  wine reg add "HKCU\Software\Wine\DllOverrides" /v dxgi      /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+  wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d10core /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
+}
+
+disable_dxvk_overrides() {
+  # Delete overrides so Wine can use builtin again
+  wine reg delete "HKCU\Software\Wine\DllOverrides" /v d3d11     /f >/dev/null 2>&1 || true
+  wine reg delete "HKCU\Software\Wine\DllOverrides" /v dxgi      /f >/dev/null 2>&1 || true
+  wine reg delete "HKCU\Software\Wine\DllOverrides" /v d3d10core /f >/dev/null 2>&1 || true
+}
+
+if supports_vk_maintenance5; then
+  log "Vulkan supports VK_KHR_maintenance5 -> enabling DXVK."
+  enable_dxvk_overrides
+else
+  log "Vulkan lacks VK_KHR_maintenance5 -> NOT enabling DXVK (avoid DXVK init failure)."
+  disable_dxvk_overrides
+fi
 
 # Set the desktop name and resolution
 DESKTOP_NAME="${DESKTOP_NAME:-DSR}"
