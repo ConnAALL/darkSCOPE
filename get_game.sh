@@ -1,24 +1,24 @@
-# Check if argument is provided
-if [ -z "$1" ]; then
-    echo "Usage: $0 \"<google_drive_link>\""
-    exit 1
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [ -z "${1:-}" ]; then
+  echo "Usage: $0 \"<google_drive_link>\""
+  exit 1
 fi
 
 DRIVE_LINK="$1"
 
-# Ensure gdown is installed
-if ! command -v gdown &> /dev/null
-then
-    echo "gdown not found. Please install it using 'pip install gdown'"
-    exit 1
+# Use the python from the *active* environment
+if ! command -v python &>/dev/null; then
+  echo "python not found. Activate your conda env first."
+  exit 1
 fi
 
-# Download file
-gdown --fuzzy "$DRIVE_LINK"
+python -m pip show gdown >/dev/null 2>&1 || {
+  echo "gdown not found in this environment. Install with:"
+  echo "  python -m pip install gdown"
+  exit 1
+}
 
-if [ $? -eq 0 ]; then
-    echo "Download completed successfully."
-else
-    echo "Download failed."
-    exit 1
-fi
+python -m gdown --fuzzy "$DRIVE_LINK"
+echo "Download completed successfully."
