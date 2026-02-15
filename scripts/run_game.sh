@@ -11,6 +11,13 @@ usage() {
   exit 2
 }
 
+is_rtx_5090() {
+  # Prefer nvidia-smi (most reliable in your container); fall back to vulkaninfo if needed
+  nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | grep -qi "RTX 5090" && return 0
+  vulkaninfo --summary 2>/dev/null | grep -qi "NVIDIA GeForce RTX 5090" && return 0
+  return 1
+}
+
 wineserver -k >/dev/null 2>&1 || true
 
 # Parse the mode from the command-line arguments
@@ -46,7 +53,10 @@ disable_dxvk_overrides() {
   wine reg delete "HKCU\Software\Wine\DllOverrides" /v d3d10core /f >/dev/null 2>&1 || true
 }
 
-if supports_vk_maintenance5; then
+if is_rtx_5090; then
+  log "Detected RTX 5090 -> enabling DXVK overrides."
+  enable_dxvk_overrides
+elif supports_vk_maintenance5; then
   log "Vulkan supports VK_KHR_maintenance5 -> enabling DXVK."
   enable_dxvk_overrides
 else
