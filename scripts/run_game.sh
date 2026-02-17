@@ -43,7 +43,7 @@ supports_vulkan_13() {
 enable_dxvk_overrides() {
   wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d11     /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
   wine reg add "HKCU\Software\Wine\DllOverrides" /v dxgi      /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
-  wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d10core /t REG_SZ /`d` native,builtin /f >/dev/null 2>&1 || true
+  wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d10core /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
 }
 
 disable_dxvk_overrides() {
