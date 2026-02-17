@@ -8,7 +8,7 @@ For the game setup to work, you need the source code of Dark Souls Remastered in
 
 The container for running the game can be built using the docker-compose file
 ```bash
-docker compose build  # Build the container
+docker compose build
 ```
 
 Before running the container, allow the root user to access your X server and get the game source from your Drive folder
