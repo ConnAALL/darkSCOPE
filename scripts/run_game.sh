@@ -35,10 +35,10 @@ export GAME_ROOT="${GAME_ROOT:-/root/Dark.Souls.Remastered.v1.04}"
 export WINEDLLOVERRIDES="${WINEDLLOVERRIDES:-winemenubuilder.exe=d;mscoree,mshtml=}"
 export WINEDEBUG="${WINEDEBUG:--all}"
 
-supports_vulkan_13() {
-  vulkaninfo --summary 2>/dev/null | grep -Eq 'Vulkan Instance Version: *1\.3|apiVersion *= *1\.3'
+supports_vk_maintenance5() {
+  # Fast check: does the loader expose the extension anywhere?
+  vulkaninfo 2>/dev/null | grep -q "VK_KHR_maintenance5"
 }
-
 
 enable_dxvk_overrides() {
   wine reg add "HKCU\Software\Wine\DllOverrides" /v d3d11     /t REG_SZ /d native,builtin /f >/dev/null 2>&1 || true
@@ -56,11 +56,11 @@ disable_dxvk_overrides() {
 if is_rtx_5090; then
   log "Detected RTX 5090 -> enabling DXVK overrides."
   enable_dxvk_overrides
-elif supports_vulkan_13; then
-  log "Vulkan 1.3 available -> enabling DXVK overrides."
+elif supports_vk_maintenance5; then
+  log "Vulkan supports VK_KHR_maintenance5 -> enabling DXVK."
   enable_dxvk_overrides
 else
-  log "No Vulkan 1.3 -> disabling DXVK overrides (use Wine builtin/wined3d)."
+  log "Vulkan lacks VK_KHR_maintenance5 -> NOT enabling DXVK (avoid DXVK init failure)."
   disable_dxvk_overrides
 fi
 
@@ -107,33 +107,27 @@ start_headless_x() {
   local xorg_log="${XORG_LOG:-/tmp/Xorg.${display_num}.log}"
 
   local tpl_dir="${XORG_TPL_DIR:-/root/scripts/xorg}"
+  local tpl_nvidia="${tpl_dir}/xorg-nvidia.conf.in"
   local conf_dir="/tmp/xorg"
-  local conf="${conf_dir}/xorg.conf"
-
-  local tpl=""
-  if have_nvidia; then
-    tpl="${tpl_dir}/xorg-nvidia.conf.in"
-  else
-    tpl="${tpl_dir}/xorg-igpu.conf.in"
-  fi
+  local conf_nvidia="${conf_dir}/xorg-nvidia.conf"
 
   local w h
   read -r w h < <(parse_res "$DESKTOP_RES") || die "Invalid DESKTOP_RES='$DESKTOP_RES'"
-  [[ -f "$tpl" ]] || die "Missing Xorg template: $tpl"
+  [[ -f "$tpl_nvidia" ]] || die "Missing Xorg template: $tpl_nvidia"
 
   mkdir -p "$conf_dir"
   sed \
     -e "s/{{XORG_DEPTH}}/${depth}/g" \
     -e "s/{{VIRTUAL_W}}/${w}/g" \
     -e "s/{{VIRTUAL_H}}/${h}/g" \
-    "$tpl" > "$conf"
+    "$tpl_nvidia" > "$conf_nvidia"
 
   mkdir -p /tmp/.X11-unix
   chmod 1777 /tmp/.X11-unix
   rm -f "/tmp/.X${display_num}-lock" || true
 
-  log "Starting Xorg on $DISPLAY using $(basename "$tpl")..."
-  Xorg "$DISPLAY" -noreset -nolisten tcp -logfile "$xorg_log" -config "$conf" >/dev/null 2>&1 &
+  log "Starting Xorg on $DISPLAY..."
+  Xorg "$DISPLAY" -noreset -nolisten tcp -logfile "$xorg_log" -config "$conf_nvidia" >/dev/null 2>&1 &
   XORG_PID="$!"
   STARTED_XORG=1
 
@@ -145,7 +139,6 @@ start_headless_x() {
   tail -n 200 "$xorg_log" 2>/dev/null || true
   die "Xorg failed to start on $DISPLAY"
 }
-
 
 start_vnc() {
   [[ "${ENABLE_VNC:-0}" == "1" ]] || return 0
@@ -165,39 +158,10 @@ start_vnc() {
   STARTED_VNC=1
 }
 
-have_nvidia() { command -v nvidia-smi >/dev/null 2>&1; }
-
-have_dri() { [[ -c /dev/dri/renderD128 || -d /dev/dri ]]; }
-
-start_headless_xvfb() {
-  local display_num="${DISPLAY_NUM:-99}"
-  export DISPLAY=":${display_num}"
-
-  local w h
-  read -r w h < <(parse_res "$DESKTOP_RES") || die "Invalid DESKTOP_RES='$DESKTOP_RES'"
-
-  log "Starting Xvfb on $DISPLAY (${w}x${h}x24)..."
-  Xvfb "$DISPLAY" -screen 0 "${w}x${h}x24" +extension GLX +render -noreset >/dev/null 2>&1 &
-  XORG_PID="$!"
-  STARTED_XORG=1
-
-  for _ in {1..120}; do
-    xdpyinfo -display "$DISPLAY" >/dev/null 2>&1 && return 0
-    sleep 0.1
-  done
-  die "Xvfb failed to start on $DISPLAY"
-}
-
 if [[ "$MODE" == "headless" ]]; then
-  # Use real Xorg whenever a real GPU device is available (NVIDIA or /dev/dri iGPU).
-  if have_nvidia || have_dri; then
-    start_headless_x
-  else
-    start_headless_xvfb
-  fi
+  start_headless_x
   start_vnc
 fi
-
 
 wine reg add "HKCU\Software\Wine\Drivers" /v Audio /t REG_SZ /d "pulse" /f >/dev/null 2>&1 || true
 
@@ -210,7 +174,7 @@ if [[ ! -f "$WINEPREFIX/system.reg" ]]; then
   wineboot --init
 fi
 
-cmd=(wine explorer "/desktop=${DESKTOP_NAME},${DESKTOP_RES}" /Unix "$(pwd)" start /wait "" "$(basename "$EXE")")
+cmd=(wine explorer "/desktop=${DESKTOP_NAME},${DESKTOP_RES}" "$(basename "$EXE")")
 
 if [[ "$MODE" == "gui" ]]; then
   exec "${cmd[@]}"
