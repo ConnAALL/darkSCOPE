@@ -1,0 +1,28 @@
+Section "ServerFlags"
+  Option "AutoAddGPU" "true"
+  Option "AutoAddDevices" "true"
+EndSection
+
+Section "Device"
+  Identifier "GPU0"
+  Driver "modesetting"
+  Option "AccelMethod" "glamor"
+  Option "DRI" "3"
+EndSection
+
+Section "Monitor"
+  Identifier "Monitor0"
+  HorizSync 28.0-80.0
+  VertRefresh 48.0-75.0
+EndSection
+
+Section "Screen"
+  Identifier "Screen0"
+  Device "GPU0"
+  Monitor "Monitor0"
+  DefaultDepth {{XORG_DEPTH}}
+  SubSection "Display"
+    Depth {{XORG_DEPTH}}
+    Virtual {{VIRTUAL_W}} {{VIRTUAL_H}}
+  EndSubSection
+EndSection
