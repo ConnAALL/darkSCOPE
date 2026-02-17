@@ -1,7 +1,8 @@
 services:
   dsr:
-    build: .
-    image: dsr:latest
+    build:
+      context: .
+      target: app
     stdin_open: true
     tty: true
     cap_add:
@@ -11,15 +12,32 @@ services:
       - apparmor=unconfined
     environment:
       DSR_MODE: ${DSR_MODE:-gui}
-      DISPLAY: ${DISPLAY:-}
       DESKTOP_RES: ${DESKTOP_RES:-800x600}
+      DISPLAY: ${DISPLAY:-}
+    group_add:
+      - render
+      - video
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
     command: /bin/bash
 
+  dsr-igpu:
+    extends:
+      service: dsr
+    build:
+      context: .
+      target: igpu
+    image: dsr:igpu
+    devices:
+      - /dev/dri/
+
   dsr-nvidia:
     extends:
       service: dsr
+    build:
+      context: .
+      target: nvidia
+    image: dsr:nvidia
     runtime: nvidia
     gpus: all
     environment:
