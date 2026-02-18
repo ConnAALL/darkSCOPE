@@ -19,8 +19,14 @@ pulseaudio -n --daemonize=yes --exit-idle-time=-1 --log-target=stderr \
   -L "module-null-sink sink_name=nullsink sink_properties=device.description=NullSink" \
   -L "module-always-sink" || true
 
+echo "[entrypoint] PulseAudio started."
+echo
+
+echo "[entrypoint] Setting up Wine prefix..."
 export WINEPREFIX="${WINEPREFIX:-/opt/prefix}"
 SAVE_ROOT="$WINEPREFIX/drive_c/users/root/Documents/NBGI/DARK SOULS REMASTERED"
+echo "[entrypoint] Wine prefix set to $WINEPREFIX."
+echo
 
 echo "[entrypoint] Checking for existing DSR user ID folder..."
 
