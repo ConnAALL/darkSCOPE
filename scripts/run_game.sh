@@ -106,7 +106,7 @@ start_headless_x() {
   local depth="${XORG_DEPTH:-24}"
   local xorg_log="${XORG_LOG:-/tmp/Xorg.${display_num}.log}"
 
-  local tpl_dir="${XORG_TPL_DIR:-/root/scripts/xorg}"
+  local tpl_dir="${XORG_TPL_DIR:-/root/scripts/}"
   local tpl_nvidia="${tpl_dir}/xorg-nvidia.conf.in"
   local conf_dir="/tmp/xorg"
   local conf_nvidia="${conf_dir}/xorg-nvidia.conf"
