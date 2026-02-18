@@ -28,6 +28,9 @@ If you want to connect a frame into the headless mode, expose a specific port to
 docker compose run --rm -p 127.0.0.1:5900:5900 dsr-nvidia
 ```
 
+> The current setup only supports running the container with a machine with Nvidia GPU.
+> Any device with an integrated GPU or AMD GPU is not supported.
+
 ## Running the Game
 
 ### Directly running inside a GUI
