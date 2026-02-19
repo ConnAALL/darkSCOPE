@@ -81,6 +81,12 @@ fi
 
 ID="$(ls -1 "$SAVE_ROOT" | grep -E '^[0-9]+$' | head -n 1)"
 echo "[entrypoint] Using DSR user ID: $ID"
+
+# Export for helper scripts (save swapping, trainers, etc.)
+export DSR_USER_ID="$ID"
+export DSR_SAVE_ROOT="$SAVE_ROOT"
+export DSR_SAVE_DIR="$SAVE_ROOT/$ID"
+echo "[entrypoint] DSR_SAVE_DIR=$DSR_SAVE_DIR"
 echo "[entrypoint] Initialization complete."
 echo
 echo "Welcome to the Dark Souls Remastered Docker container!"
