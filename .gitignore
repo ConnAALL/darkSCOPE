@@ -1,2 +1,4 @@
 Dark.Souls.Remastered.v1.04.zip
 temp
+*.pyc
+__pycache__/
