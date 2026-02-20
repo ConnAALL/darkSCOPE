@@ -33,6 +33,9 @@ apt-get install -y \
   curl \
   gnupg2
 
+log "Install gdown (needed by get_game.sh)"
+python -m pip install -U gdown
+
 log "Enable/start Docker"
 systemctl enable --now docker || true
 
