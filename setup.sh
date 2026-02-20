@@ -69,6 +69,8 @@ apt-get install -y \
 
 log "Configure NVIDIA runtime for Docker + restart Docker"
 nvidia-ctk runtime configure --runtime=docker
+
+log "Restart Docker"
 systemctl restart docker
 
 log "Done."
