@@ -28,65 +28,8 @@ SAVE_ROOT="$WINEPREFIX/drive_c/users/root/Documents/NBGI/DARK SOULS REMASTERED"
 echo "[entrypoint] Wine prefix set to $WINEPREFIX."
 echo
 
-echo "[entrypoint] Checking for existing DSR user ID folder..."
-
-has_id_dir() {
-  [[ -d "$SAVE_ROOT" ]] || return 1
-  ls -1 "$SAVE_ROOT" 2>/dev/null | grep -Eq '^[0-9]+$'
-}
-
-if has_id_dir; then
-  echo "[entrypoint] Existing ID folder detected."
-else
-  echo "[entrypoint] No ID folder found. Launching headless game to generate one..."
-
-  mkdir -p "$SAVE_ROOT"
-
-  /root/scripts/run_game.sh headless >/dev/null 2>&1 &
-  GAME_PID=$!
-  echo "[entrypoint] Headless game started (PID=$GAME_PID). Waiting for ID folder..."
-
-  TIMEOUT=60
-  ELAPSED=0
-
-  while ! has_id_dir; do
-    sleep 0.5
-    ELAPSED=$((ELAPSED + 1))
-
-    if ! kill -0 "$GAME_PID" >/dev/null 2>&1; then
-      echo "[entrypoint] Game process exited before ID folder appeared."
-      break
-    fi
-
-    if (( ELAPSED >= TIMEOUT * 2 )); then
-      echo "[entrypoint] ERROR: Timed out waiting for ID folder."
-      kill -KILL "$GAME_PID" >/dev/null 2>&1 || true
-      exit 1
-    fi
-  done
-
-  echo "[entrypoint] ID folder detected. Stopping headless game..."
-
-  kill -TERM "$GAME_PID" >/dev/null 2>&1 || true
-  sleep 2
-  kill -KILL "$GAME_PID" >/dev/null 2>&1 || true
-  wait "$GAME_PID" >/dev/null 2>&1 || true
-fi
-
-if ! has_id_dir; then
-  echo "[entrypoint] ERROR: No numeric game ID folder found under:"
-  echo "  $SAVE_ROOT"
-  exit 1
-fi
-
-ID="$(ls -1 "$SAVE_ROOT" | grep -E '^[0-9]+$' | head -n 1)"
-echo "[entrypoint] Using DSR user ID: $ID"
-
-# Export for helper scripts (save swapping, trainers, etc.)
-export DSR_USER_ID="$ID"
-export DSR_SAVE_ROOT="$SAVE_ROOT"
-export DSR_SAVE_DIR="$SAVE_ROOT/$ID"
-echo "[entrypoint] DSR_SAVE_DIR=$DSR_SAVE_DIR"
+echo "[entrypoint] To initialize the game instances and run the training, run the following command:"
+echo "  python3 /root/scripts/generate_config.py --n <N>"
 echo "[entrypoint] Initialization complete."
 echo
 echo "Welcome to the Dark Souls Remastered Docker container!"

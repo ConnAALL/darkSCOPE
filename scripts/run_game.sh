@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -euo pipefail
 
 # Helper functions
@@ -69,7 +70,9 @@ DESKTOP_NAME="${DESKTOP_NAME:-DSR}"
 DESKTOP_RES="${DESKTOP_RES:-800x600}"
 
 # Set the XDG runtime directory
-export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg}"
+# For multi-instance headless runs, each instance should have its own XDG_RUNTIME_DIR.
+DISPLAY_NUM_FOR_XDG="${DISPLAY_NUM:-99}"
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/xdg_${DISPLAY_NUM_FOR_XDG}}"
 mkdir -p "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 
@@ -108,7 +111,7 @@ start_headless_x() {
 
   local tpl_dir="${XORG_TPL_DIR:-/root/scripts/}"
   local tpl_nvidia="${tpl_dir}/xorg-nvidia.conf.in"
-  local conf_dir="/tmp/xorg"
+  local conf_dir="/tmp/xorg/${display_num}"
   local conf_nvidia="${conf_dir}/xorg-nvidia.conf"
 
   local w h
