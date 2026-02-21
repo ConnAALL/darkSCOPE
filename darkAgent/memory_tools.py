@@ -3,23 +3,66 @@ Tools for reading a specific memmory offset in the game by using process ID and 
 """
 
 # Import statements
+import json
 import os
 import re
 import struct
-import time
+from pathlib import Path
 from typing import Callable, Dict
 
 from memory_offsets import *
 
 PROC_SUBSTR = "DarkSoulsRemastered.exe"  # Substring for finding the game process
+CONFIG_PATH = Path("/root/config/dsr_instances.json")
 
 
-def find_game_pid(substr: str, maps_needle: str) -> int:
+def _read_proc_environ(pid: int) -> bytes:
+    try:
+        with open(f"/proc/{pid}/environ", "rb") as f:
+            return f.read()
+    except Exception:
+        return b""
+
+
+def _env_has_wineprefix(pid: int, wineprefix: str) -> bool:
+    if not wineprefix:
+        return False
+    env = _read_proc_environ(pid)
+    if not env:
+        return False
+    return f"WINEPREFIX={wineprefix}".encode("utf-8") in env
+
+
+def _wineprefix_for_instance(instance: str) -> str:
+    """
+    Resolve WINEPREFIX for a given instance name using /root/config/dsr_instances.json.
+    """
+    if not CONFIG_PATH.is_file():
+        raise RuntimeError(f"Missing instance config: {CONFIG_PATH}")
+    try:
+        cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+    except Exception as e:
+        raise RuntimeError(f"Failed to parse {CONFIG_PATH}: {e}") from e
+    instances = cfg.get("instances")
+    if not isinstance(instances, dict):
+        raise RuntimeError(f"Config {CONFIG_PATH} must contain an 'instances' object")
+    inst = instances.get(instance)
+    if not isinstance(inst, dict):
+        available = ", ".join(sorted(instances.keys()))
+        raise RuntimeError(f"Unknown instance '{instance}'. Available: {available}")
+    wineprefix = inst.get("wineprefix")
+    if not isinstance(wineprefix, str) or not wineprefix.strip():
+        raise RuntimeError(f"Instance '{instance}' missing 'wineprefix' in {CONFIG_PATH}")
+    return wineprefix.strip()
+
+
+def find_game_pid(substr: str, maps_needle: str, wineprefix: str | None = None) -> int:
     """
     Finds the process ID of the game process by searching for the substring in the command line and checking if the module is in the maps
     Args:
         substr: Substring for finding the game process. e.g. "DarkSoulsRemastered.exe"
         maps_needle: Substring for finding the module in the maps e.g. "DarkSoulsRemastered.exe"
+        wineprefix: If provided, only match processes whose environment has WINEPREFIX=<wineprefix>
     Returns:
         The process ID of the game process. If not found, raises a RuntimeError
     """
@@ -31,6 +74,8 @@ def find_game_pid(substr: str, maps_needle: str) -> int:
             # Open the command line of the process and read the output
             cmd = open(f"/proc/{pid}/cmdline", "rb").read().decode(errors="ignore")
             if substr not in cmd:
+                continue
+            if wineprefix is not None and not _env_has_wineprefix(pid, wineprefix):
                 continue
             # Only accept this PID if its maps contains the module
             with open(f"/proc/{pid}/maps", "r", encoding="utf-8", errors="ignore") as f:
@@ -137,13 +182,16 @@ def read_typed_offset(mem, base_addr: int, offset: int, type_str: str):
     return read_typed(mem, base_addr + offset, type_str)
 
 
-def setup_memory_reader() -> tuple[int, int, int]:
+def setup_memory_reader(instance: str | None = None) -> tuple[int, int, int]:
     """
     Sets up the memory reader by finding the process ID, base address, and pointer location of the baseX pointer
+    Args:
+        instance: If provided, target that instance by selecting the game PID whose environment matches the instance WINEPREFIX.
     Returns:
         The process ID, base address, and pointer location of the baseX pointer
     """
-    pid = find_game_pid(PROC_SUBSTR, PROC_SUBSTR)  # Find the process ID of the game process
+    wineprefix = _wineprefix_for_instance(instance) if instance is not None else None
+    pid = find_game_pid(PROC_SUBSTR, PROC_SUBSTR, wineprefix=wineprefix)  # Find the process ID of the game process
     base = module_base(pid, PROC_SUBSTR)  # Find the base address of the module
     ptrloc = base + BASEX_PTRLOC_RVA  # Find the pointer location of the baseX pointer
     return pid, base, ptrloc
