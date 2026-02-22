@@ -11,15 +11,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, cast
+from typing import cast
+
+from instance_config import resolve_instance
 
 CAPTURES_ROOT = Path("/root/captures")
-CONFIG_PATH = Path("/root/config/dsr_instances.json")
 FPS = 24.0
 DEFAULT_DISPLAY = os.environ.get("DISPLAY", ":99")
 
@@ -27,38 +27,6 @@ DEFAULT_DISPLAY = os.environ.get("DISPLAY", ":99")
 def _timestamp() -> str:
     # include microseconds to avoid collisions when starting captures simultaneously
     return datetime.utcnow().strftime("%Y%m%d_%H%M%S_%f")
-
-
-def _load_instances(config_path: Path) -> Dict[str, Any]:
-    if not config_path.is_file():
-        raise SystemExit(f"ERROR: missing config file: {config_path}")
-    try:
-        cfg = json.loads(config_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise SystemExit(f"ERROR: failed to parse {config_path}: {e}")
-    instances = cfg.get("instances")
-    if not isinstance(instances, dict):
-        raise SystemExit(f"ERROR: config {config_path} must contain an 'instances' object")
-    return instances
-
-
-def _display_for_instance(instance_name: str) -> str:
-    instances = _load_instances(CONFIG_PATH)
-    inst = instances.get(instance_name)
-    if not isinstance(inst, dict):
-        available = ", ".join(sorted(instances.keys()))
-        raise SystemExit(f"ERROR: unknown instance '{instance_name}'. Available: {available}")
-
-    display_num = inst.get("display_num")
-    if isinstance(display_num, int):
-        return f":{display_num}"
-
-    # fallback if someone manually writes 'display' like ':99'
-    display = inst.get("display")
-    if isinstance(display, str) and display.strip():
-        return display.strip()
-
-    raise SystemExit(f"ERROR: instance '{instance_name}' missing integer 'display_num' in {CONFIG_PATH}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -182,7 +150,8 @@ def main() -> None:
     CAPTURES_ROOT.mkdir(parents=True, exist_ok=True)  # Create the captures root directory if it doesn't exist
 
     if args.instance:
-        os.environ["DISPLAY"] = _display_for_instance(args.instance)  # Set the display environment variable to the display number for the given instance
+        inst = resolve_instance(args.instance)
+        os.environ["DISPLAY"] = inst.display  # set display for mss
     else:
         os.environ["DISPLAY"] = args.display or DEFAULT_DISPLAY  # Set the display environment variable to the display number for the given display
 

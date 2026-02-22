@@ -3,17 +3,16 @@ Tools for reading a specific memmory offset in the game by using process ID and 
 """
 
 # Import statements
-import json
 import os
 import re
 import struct
-from pathlib import Path
 from typing import Callable, Dict
 
 from memory_offsets import *
 
+from instance_config import resolve_instance
+
 PROC_SUBSTR = "DarkSoulsRemastered.exe"  # Substring for finding the game process
-CONFIG_PATH = Path("/root/config/dsr_instances.json")
 
 
 def _read_proc_environ(pid: int) -> bytes:
@@ -31,29 +30,6 @@ def _env_has_wineprefix(pid: int, wineprefix: str) -> bool:
     if not env:
         return False
     return f"WINEPREFIX={wineprefix}".encode("utf-8") in env
-
-
-def _wineprefix_for_instance(instance: str) -> str:
-    """
-    Resolve WINEPREFIX for a given instance name using /root/config/dsr_instances.json.
-    """
-    if not CONFIG_PATH.is_file():
-        raise RuntimeError(f"Missing instance config: {CONFIG_PATH}")
-    try:
-        cfg = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise RuntimeError(f"Failed to parse {CONFIG_PATH}: {e}") from e
-    instances = cfg.get("instances")
-    if not isinstance(instances, dict):
-        raise RuntimeError(f"Config {CONFIG_PATH} must contain an 'instances' object")
-    inst = instances.get(instance)
-    if not isinstance(inst, dict):
-        available = ", ".join(sorted(instances.keys()))
-        raise RuntimeError(f"Unknown instance '{instance}'. Available: {available}")
-    wineprefix = inst.get("wineprefix")
-    if not isinstance(wineprefix, str) or not wineprefix.strip():
-        raise RuntimeError(f"Instance '{instance}' missing 'wineprefix' in {CONFIG_PATH}")
-    return wineprefix.strip()
 
 
 def find_game_pid(substr: str, maps_needle: str, wineprefix: str | None = None) -> int:
@@ -190,7 +166,12 @@ def setup_memory_reader(instance: str | None = None) -> tuple[int, int, int]:
     Returns:
         The process ID, base address, and pointer location of the baseX pointer
     """
-    wineprefix = _wineprefix_for_instance(instance) if instance is not None else None
+    wineprefix = None
+    if instance is not None:
+        inst = resolve_instance(instance)
+        if not inst.wineprefix:
+            raise RuntimeError(f"Instance '{instance}' is missing 'wineprefix' in /root/config/dsr_instances.json")
+        wineprefix = inst.wineprefix
     pid = find_game_pid(PROC_SUBSTR, PROC_SUBSTR, wineprefix=wineprefix)  # Find the process ID of the game process
     base = module_base(pid, PROC_SUBSTR)  # Find the base address of the module
     ptrloc = base + BASEX_PTRLOC_RVA  # Find the pointer location of the baseX pointer

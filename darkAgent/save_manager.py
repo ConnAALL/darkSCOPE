@@ -31,7 +31,6 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import re
 import shutil
@@ -40,10 +39,11 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from instance_config import CONFIG_PATH, resolve_instance
+
 
 SL2_NAME = "DRAKS0005.sl2"  # Default save file nmae 
 ID_DIR_RE = re.compile(r"^[0-9]+$")  # Regular expression to match the numeric ID directory
-CONFIG_PATH = Path("/root/config/dsr_instances.json")
 
 
 def _now_stamp() -> str:
@@ -65,34 +65,16 @@ class SavePaths:
     save_dir: Path
 
 
-def _load_instances(config_path: Path) -> dict:
-    if not config_path.is_file():
-        raise RuntimeError(f"Config file not found: {config_path}")
-    try:
-        cfg = json.loads(config_path.read_text(encoding="utf-8"))
-    except Exception as e:
-        raise RuntimeError(f"Failed to parse config {config_path}: {e}") from e
-    instances = cfg.get("instances")
-    if not isinstance(instances, dict):
-        raise RuntimeError(f"Config {config_path} must contain an 'instances' object")
-    return instances
-
-
 def _resolve_save_paths_from_instance(instance_name: str) -> SavePaths:
     """
     Resolve save paths for a specific instance from /root/config/dsr_instances.json.
     Expects generate_config.py to have populated dsr_user_id + dsr_save_dir (or dsr_save_root).
     """
-    instances = _load_instances(CONFIG_PATH)
-    inst = instances.get(instance_name)
-    if not isinstance(inst, dict):
-        available = ", ".join(sorted(instances.keys()))
-        raise RuntimeError(f"Unknown instance '{instance_name}'. Available: {available}")
-
-    dsr_save_dir = inst.get("dsr_save_dir")
-    dsr_save_root = inst.get("dsr_save_root")
-    dsr_user_id = inst.get("dsr_user_id")
-    wineprefix = inst.get("wineprefix")
+    inst_cfg = resolve_instance(instance_name)
+    dsr_save_dir = inst_cfg.dsr_save_dir
+    dsr_save_root = inst_cfg.dsr_save_root
+    dsr_user_id = inst_cfg.dsr_user_id
+    wineprefix = inst_cfg.wineprefix
 
     if isinstance(dsr_save_dir, str) and dsr_save_dir.strip():
         save_dir_p = Path(dsr_save_dir).expanduser()
