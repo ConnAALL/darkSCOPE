@@ -157,14 +157,28 @@ def read_typed_offset(mem, base_addr: int, offset: int, type_str: str):
     """
     return read_typed(mem, base_addr + offset, type_str)
 
+def read_pointer_chain(mem, base_addr: int, offsets: list[int], final_type: str) -> int | None:
+    """
+    Reads a value from a pointer chain. Starting from the base address, and reading the offsets one by one until the last offset is reached.
+    If any pointer is null, returns None.
+    """
+    current_ptr = base_addr # Start at the base address
+    # Loop through all offsets EXCEPT the last one
+    for offset in offsets[:-1]:
+        current_ptr = read_typed_offset(mem, current_ptr, offset, "u64")
+        if current_ptr == 0:
+            return None # Pointer is null, boss is not loaded
+    # Read the final value (HP) using the last offset
+    return read_typed_offset(mem, current_ptr, offsets[-1], final_type)
 
-def setup_memory_reader(instance: str | None = None) -> tuple[int, int, int]:
+
+def setup_memory_reader(instance: str | None = None) -> tuple[int, int, int, int, int]:
     """
     Sets up the memory reader by finding the process ID, base address, and pointer location of the baseX pointer
     Args:
         instance: If provided, target that instance by selecting the game PID whose environment matches the instance WINEPREFIX.
     Returns:
-        The process ID, base address, and pointer location of the baseX pointer
+        The process ID, base address, pointer location of the baseX pointer, pointer location of the baseB pointer, and static base for the boss
     """
     wineprefix = None
     if instance is not None:
@@ -174,5 +188,7 @@ def setup_memory_reader(instance: str | None = None) -> tuple[int, int, int]:
         wineprefix = inst.wineprefix
     pid = find_game_pid(PROC_SUBSTR, PROC_SUBSTR, wineprefix=wineprefix)  # Find the process ID of the game process
     base = module_base(pid, PROC_SUBSTR)  # Find the base address of the module
-    ptrloc = base + BASEX_PTRLOC_RVA  # Find the pointer location of the baseX pointer
-    return pid, base, ptrloc
+    basex_ptrloc = base + BASEX_PTRLOC_RVA  # Find the pointer location of the baseX pointer
+    baseb_ptrloc = base + BASEB_PTRLOC_RVA  # Find the pointer location of the baseB pointer
+    boss_static_base = base + BOSS_BASE_PTRLOC_RVA  # Find the static base for the boss
+    return pid, base, basex_ptrloc, baseb_ptrloc, boss_static_base
